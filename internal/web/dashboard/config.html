@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>restream-controller — settings</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="config.css">
+</head>
+<body>
+<div id="toast-container"></div>
+
+<section class="view">
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Sources</h2>
+      <button type="button" id="btn-add-source" class="ghost-button">Add</button>
+    </div>
+    <div id="sources-list"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Streaming platforms</h2>
+      <button type="button" id="btn-add-platform" class="ghost-button">Add</button>
+    </div>
+    <div id="platforms-list"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Groups</h2>
+      <button type="button" id="btn-add-group" class="ghost-button">Add</button>
+    </div>
+    <div id="groups-list"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Fallback presets</h2>
+      <button type="button" id="btn-files" class="ghost-button">Files</button>
+      <button type="button" id="btn-add-preset" class="ghost-button">Add</button>
+    </div>
+    <div id="presets-list"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>System settings (global)</h2>
+      <button type="button" id="btn-apply" class="ghost-button">Apply</button>
+    </div>
+    <form id="settings-form">
+      <div class="field">
+        <label for="field-connect-timeout">Connect timeout (ms) -- wait for OBS's first frame (shared by all ingest paths)</label>
+        <input type="number" id="field-connect-timeout" name="connect_timeout_ms" min="2500" step="1">
+      </div>
+
+      <div class="field">
+        <label for="field-read-timeout">Read timeout (ms) -- react to a stalled network once live</label>
+        <input type="number" id="field-read-timeout" name="read_timeout_ms" min="300" step="1">
+      </div>
+
+      <div class="field">
+        <label for="field-offline-timeout">Offline timeout (seconds) -- wait for OBS to reconnect before ending the broadcast</label>
+        <input type="number" id="field-offline-timeout" name="offline_timeout_sec" min="60" step="1">
+      </div>
+
+      <div class="field field-check">
+        <label for="field-icmp-ping"><input type="checkbox" id="field-icmp-ping" name="icmp_ping"> Use ICMP ping for the Control tab (off = TCP-connect time; ICMP may be blocked/need privileges)</label>
+      </div>
+
+      <div id="settings-errors" class="errors" hidden></div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2>OBS Source widget (obs-source.html)</h2>
+    <div class="field field-check">
+      <label for="field-obs-widget-bitrate"><input type="checkbox" id="field-obs-widget-bitrate" name="obs_widget_show_bitrate"> Show Main Source speed (Mbit/s) -- otherwise the widget stays fully transparent while connected</label>
+    </div>
+  </div>
+</section>
+
+<!-- CREATE source/platform: name + type; OK creates it, then the edit widget
+     opens automatically to configure the rest. -->
+<div id="create-modal" class="modal-overlay" hidden>
+  <div class="modal">
+    <h2 id="create-title">Add</h2>
+    <div class="field-two">
+      <div class="field">
+        <label for="create-name">Name</label>
+        <input type="text" id="create-name" placeholder="e.g. Kick" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="create-type">Type</label>
+        <select id="create-type"></select>
+      </div>
+    </div>
+    <div id="create-errors" class="errors" hidden></div>
+    <div class="actions">
+      <button type="button" id="create-cancel">Cancel</button>
+      <button type="button" id="create-ok" class="primary">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- modify SOURCE modal -->
+<div id="source-modal" class="modal-overlay" hidden>
+  <div class="modal">
+    <h2 id="smodal-title">Modify source</h2>
+    <div class="field-two">
+      <div class="field">
+        <label for="smodal-name">Name</label>
+        <input type="text" id="smodal-name" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="smodal-type">Type</label>
+        <select id="smodal-type">
+          <option value="rtmp">RTMP</option>
+          <option value="srt">SRT (multitrack)</option>
+        </select>
+      </div>
+    </div>
+    <div class="field field-check" id="smodal-vod-track-field">
+      <label for="smodal-vod-track" title="Adds a second audio track (#Live + #VOD) for Twitch"><input type="checkbox" id="smodal-vod-track"> Twitch VOD Track</label>
+    </div>
+    <div class="field field-check field-inline" id="smodal-eb-field">
+      <label for="smodal-eb" title="OBS sends a Twitch multitrack video ladder in one connection"><input type="checkbox" id="smodal-eb"> Enable Enhanced Broadcasting</label>
+      <span class="inline-group" id="smodal-video-tracks-field" hidden>
+        <label for="smodal-video-tracks" title="Mirrors Maximum Video Tracks in the OBS stream settings; AUTO makes no claim about the count">Maximum Video tracks</label>
+        <select id="smodal-video-tracks">
+          <option value="0">AUTO</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </span>
+    </div>
+    <div class="field field-inline" id="smodal-tracks-field" hidden>
+      <label for="smodal-tracks" title="Tracks are positional: OBS track order on the wire, not OBS track numbers">Audio tracks count (Settings-&gt;Output)</label>
+      <input type="range" id="smodal-tracks" min="1" max="6" step="1" value="1">
+      <span class="slider-value" id="smodal-tracks-value">1</span>
+    </div>
+    <div class="field">
+      <label>OBS Settings -&gt; Stream</label>
+      <div class="masked-grid" id="smodal-ingest-rtmp">
+        <span class="masked-grid-label">Server</span>
+        <div class="preview" id="smodal-ingest-server">–</div>
+        <button type="button" id="smodal-ingest-show-rtmp" class="reveal-toggle masked-grid-toggle">Show</button>
+        <span class="masked-grid-label">Stream Key</span>
+        <div class="preview" id="smodal-ingest-key">–</div>
+      </div>
+      <div class="masked-grid rows-1" id="smodal-ingest-srt" hidden>
+        <span class="masked-grid-label">SRT URL</span>
+        <div class="preview" id="smodal-ingest-url">–</div>
+        <button type="button" id="smodal-ingest-show-srt" class="reveal-toggle masked-grid-toggle">Show</button>
+      </div>
+    </div>
+    <div id="smodal-errors" class="errors" hidden></div>
+    <div class="actions">
+      <button type="button" id="smodal-cancel">Cancel</button>
+      <button type="button" id="smodal-ok" class="primary">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- modify PLATFORM modal -->
+<div id="platform-modal" class="modal-overlay" hidden>
+  <div class="modal">
+    <h2 id="pmodal-title">Modify platform</h2>
+    <div class="field-two">
+      <div class="field">
+        <label for="pmodal-name">Name</label>
+        <input type="text" id="pmodal-name" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="pmodal-type">Type</label>
+        <select id="pmodal-type">
+          <option value="rtmp">RTMP</option>
+          <option value="srt">SRT</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-two">
+      <div class="field">
+        <label for="pmodal-group">Group</label>
+        <select id="pmodal-group"></select>
+      </div>
+      <div class="field">
+        <label for="pmodal-preset">Fallback preset</label>
+        <select id="pmodal-preset"></select>
+      </div>
+    </div>
+    <div class="stream-panel">
+      <div class="stream-panel-fields">
+        <!-- Дві колонки × два рядки ОДНІЄЮ сіткою: тоді "Twitch VOD Track"
+             і "VOD audio track" -- один рядок, тож їхні вертикальні центри
+             збігаються за побудовою, а не за підібраним відступом. -->
+        <div class="stream-grid" id="pmodal-stream-grid">
+          <div class="field" id="pmodal-source-field">
+            <label for="pmodal-source" title="An Enhanced Broadcasting source also offers its whole ladder as one entry">Video source</label>
+            <select id="pmodal-source"></select>
+          </div>
+          <div class="field" id="pmodal-audio-field">
+            <label for="pmodal-audio" id="pmodal-audio-label">Audio track</label>
+            <select id="pmodal-audio"></select>
+          </div>
+          <div class="field field-check" id="pmodal-vod-track-field">
+            <label for="pmodal-vod-track" title="Send a separate Live + VOD audio pair (Twitch)"><input type="checkbox" id="pmodal-vod-track"> Twitch VOD Track</label>
+          </div>
+          <div class="field" id="pmodal-audio-vod-field" hidden>
+            <label for="pmodal-audio-vod">VOD audio track</label>
+            <select id="pmodal-audio-vod"></select>
+          </div>
+        </div>
+        <div class="field-col" id="pmodal-track-map" hidden></div>
+      </div>
+      <select id="pmodal-clone-fill" class="clone-fill" title="Fill from a source of the same type" hidden></select>
+    </div>
+    <div class="field" id="pmodal-creds-rtmp">
+      <div class="masked-grid rows-2">
+        <label class="masked-grid-label" for="pmodal-server">Server</label>
+        <input type="password" id="pmodal-server" placeholder="rtmp://… or rtmps://…" autocomplete="off" spellcheck="false">
+        <button type="button" id="pmodal-show-rtmp" class="reveal-toggle masked-grid-toggle">Show</button>
+        <label class="masked-grid-label" for="pmodal-key">Stream Key</label>
+        <input type="password" id="pmodal-key" placeholder="your stream key" autocomplete="off" spellcheck="false">
+        <label class="masked-grid-label">Final URL</label>
+        <div id="pmodal-url-rtmp" class="preview masked-grid-full">–</div>
+      </div>
+    </div>
+    <div class="field" id="pmodal-creds-srt" hidden>
+      <div class="masked-grid rows-3">
+        <label class="masked-grid-label" for="pmodal-srt-server">Server</label>
+        <input type="password" id="pmodal-srt-server" placeholder="srt://host:port" autocomplete="off" spellcheck="false">
+        <button type="button" id="pmodal-show-srt" class="reveal-toggle masked-grid-toggle">Show</button>
+        <label class="masked-grid-label" for="pmodal-streamid">Stream ID</label>
+        <input type="password" id="pmodal-streamid" placeholder="streamid (if the platform gives one)" autocomplete="off" spellcheck="false">
+        <label class="masked-grid-label" for="pmodal-passphrase">Passphrase</label>
+        <input type="password" id="pmodal-passphrase" placeholder="passphrase (optional)" autocomplete="off" spellcheck="false">
+        <label class="masked-grid-label">Final URL</label>
+        <div id="pmodal-url-srt" class="preview masked-grid-full">–</div>
+      </div>
+    </div>
+    <div id="pmodal-errors" class="errors" hidden></div>
+    <div class="actions">
+      <button type="button" id="pmodal-cancel">Cancel</button>
+      <button type="button" id="pmodal-ok" class="primary">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- add/rename GROUP modal -->
+<div id="group-modal" class="modal-overlay" hidden>
+  <div class="modal">
+    <h2 id="gmodal-title">Add group</h2>
+    <div class="field">
+      <label for="gmodal-name">Name</label>
+      <input type="text" id="gmodal-name" placeholder="e.g. Night crew" autocomplete="off" spellcheck="false">
+    </div>
+    <div id="gmodal-errors" class="errors" hidden></div>
+    <div class="actions">
+      <button type="button" id="gmodal-cancel">Cancel</button>
+      <button type="button" id="gmodal-ok" class="primary">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- add/modify FALLBACK PRESET modal (Start/Loop/End sequence) -->
+<div id="preset-modal" class="modal-overlay" hidden>
+  <div class="modal">
+    <h2 id="preset-modal-title">Add fallback preset</h2>
+    <div class="field-two">
+      <div class="field">
+        <label for="preset-name">Name</label>
+        <input type="text" id="preset-name" placeholder="e.g. Intro/Outro" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="preset-type">Type</label>
+        <select id="preset-type">
+          <option value="sequence">Single loop video</option>
+          <option value="folder">Folder (shuffled) + separator</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="preset-start">Start video (optional) — plays once when the stream drops, not interrupted</label>
+      <div class="path-row">
+        <input type="text" id="preset-start" placeholder="leave empty to skip" autocomplete="off" spellcheck="false">
+        <button type="button" class="ghost-button" data-browse="preset-start" data-browse-mode="file" data-browse-title="Select start video">Browse</button>
+      </div>
+    </div>
+    <div class="field" id="preset-loop-field">
+      <label for="preset-loop">Loop video (required) — loops while OBS is down</label>
+      <div class="path-row">
+        <input type="text" id="preset-loop" placeholder="loop.mp4" autocomplete="off" spellcheck="false">
+        <button type="button" class="ghost-button" data-browse="preset-loop" data-browse-mode="file" data-browse-title="Select loop video">Browse</button>
+      </div>
+    </div>
+    <div class="field" id="preset-folder-field" hidden>
+      <label for="preset-folder">Folder (required) — its video files are played in a shuffled rotation</label>
+      <div class="path-row">
+        <input type="text" id="preset-folder" placeholder="clips/" autocomplete="off" spellcheck="false">
+        <button type="button" class="ghost-button" data-browse="preset-folder" data-browse-mode="dir" data-browse-title="Select folder">Browse</button>
+      </div>
+    </div>
+    <div class="field" id="preset-separator-field" hidden>
+      <label for="preset-separator">Separator video (optional) — played between clips</label>
+      <div class="path-row">
+        <input type="text" id="preset-separator" placeholder="leave empty to skip" autocomplete="off" spellcheck="false">
+        <button type="button" class="ghost-button" data-browse="preset-separator" data-browse-mode="file" data-browse-title="Select separator video">Browse</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="preset-end">End video (optional) — plays once before returning to live</label>
+      <div class="path-row">
+        <input type="text" id="preset-end" placeholder="leave empty to skip" autocomplete="off" spellcheck="false">
+        <button type="button" class="ghost-button" data-browse="preset-end" data-browse-mode="file" data-browse-title="Select end video">Browse</button>
+      </div>
+    </div>
+    <div class="preset-hint">Paths are relative to <code>backup/</code> on the VPS. Every file must have both a video and an audio track. Folder files are prepared in the background and joined into the shuffle as they become ready.</div>
+    <div id="preset-errors" class="errors" hidden></div>
+    <div class="actions">
+      <button type="button" id="preset-files" class="ghost-button">Files</button>
+      <div class="spacer"></div>
+      <button type="button" id="preset-delete" class="danger">Delete</button>
+      <button type="button" id="preset-cancel">Cancel</button>
+      <button type="button" id="preset-ok" class="primary">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- one-line text prompt (new folder / rename): window.prompt is not
+     dependable in the OBS Custom Browser Dock, confirm() is -->
+<div id="text-modal" class="modal-overlay modal-l3" hidden>
+  <div class="modal">
+    <h2 id="text-modal-title">Name</h2>
+    <div class="field">
+      <label for="text-modal-input" id="text-modal-label">Name</label>
+      <input type="text" id="text-modal-input" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="actions">
+      <button type="button" id="text-modal-cancel">Cancel</button>
+      <button type="button" id="text-modal-ok" class="primary">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- server file manager for backup/ (upload / new folder / rename / delete) -->
+<div id="files-modal" class="modal-overlay modal-l2" hidden>
+  <div class="modal">
+    <h2>Fallback files on server</h2>
+    <div class="fm-bar">
+      <button type="button" id="fm-up" class="ghost-button fm-up" title="Up one folder">↑</button>
+      <span id="fm-path" class="fm-path"></span>
+      <div class="spacer"></div>
+      <button type="button" id="fm-newdir" class="ghost-button">New folder</button>
+      <button type="button" id="fm-refresh" class="ghost-button">Refresh</button>
+    </div>
+    <div id="fm-drop" class="fm-drop">
+      <span class="fm-drop-label">Drop a video file here — mp4 / mkv / mov, with both a video and an audio track</span>
+      <button type="button" id="fm-browse" class="ghost-button accent">Browse…</button>
+      <input type="file" id="fm-file-input" accept="video/*" hidden>
+    </div>
+    <div id="fm-rows" class="fm-rows"></div>
+    <div id="files-errors" class="errors" hidden></div>
+    <div class="actions">
+      <button type="button" id="fm-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- file / folder picker for the fallback preset fields -->
+<div id="picker-modal" class="modal-overlay modal-l2" hidden>
+  <div class="modal">
+    <h2 id="picker-title">Select video</h2>
+    <div id="picker-rows" class="fm-rows"></div>
+    <div class="fm-bar">
+      <button type="button" id="picker-up" class="ghost-button fm-up" title="Up one folder">↑</button>
+      <div class="path-field">
+        <span class="path-prefix">backup/</span>
+        <input type="text" id="picker-path" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <div class="actions">
+      <button type="button" id="picker-cancel">Cancel</button>
+      <button type="button" id="picker-ok" class="primary">Select</button>
+    </div>
+  </div>
+</div>
+
+<!-- video preview, streamed from the server with Range requests -->
+<div id="preview-modal" class="modal-overlay modal-l3" hidden>
+  <div class="modal">
+    <h2 id="preview-title">Preview</h2>
+    <video id="preview-video" class="preview-video" controls preload="metadata"></video>
+    <div id="preview-note" class="preview-note" hidden></div>
+    <div class="actions">
+      <span id="preview-meta" class="preview-meta"></span>
+      <div class="spacer"></div>
+      <button type="button" id="preview-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- single-file upload transfer -->
+<div id="upload-modal" class="modal-overlay modal-l3" hidden>
+  <div class="modal">
+    <h2 id="upload-title">Uploading</h2>
+    <div id="upload-name" class="up-name"></div>
+    <div class="up-track"><div id="upload-fill" class="up-fill"></div></div>
+    <div class="up-meta">
+      <span id="upload-percent"></span>
+      <span id="upload-detail"></span>
+    </div>
+    <div id="upload-errors" class="errors" hidden></div>
+    <div class="actions">
+      <button type="button" id="upload-abort" class="danger">Abort upload</button>
+      <button type="button" id="upload-close" hidden>Close</button>
+      <button type="button" id="upload-retry" class="primary" hidden>Retry</button>
+    </div>
+  </div>
+</div>
+
+<!-- one row in a Settings list (sources / platforms / groups) -->
+<template id="item-row-template">
+  <div class="item-row">
+    <span class="item-name"></span>
+    <span class="item-tag"></span>
+    <div class="item-actions">
+      <button type="button" class="item-delete icon-button" title="Delete">Delete</button>
+      <button type="button" class="item-edit icon-button" title="Modify">Modify</button>
+    </div>
+  </div>
+</template>
+
+<script src="shared.js"></script>
+<script src="config.js"></script>
+</body>
+</html>

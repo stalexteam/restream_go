@@ -1,0 +1,334 @@
+/*
+ * Док OBS (/dashboard): шапка з індикаторами, таблиці Status
+ * і Control. Нічого з налаштувань сюди не потрапляє.
+ */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.tab-button {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tab-button:hover {
+  color: var(--fg);
+}
+
+.tab-button.active {
+  color: #fff;
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
+.tab-panel[hidden] {
+  display: none;
+}
+
+.indicators {
+  display: flex;
+  gap: 6px;
+}
+
+.indicator {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  min-width: 46px;
+  text-align: center;
+}
+
+.ind-connecting { color: var(--muted); }
+.ind-live { color: var(--green); border-color: var(--green); }
+.ind-lost { color: var(--red); border-color: var(--red); }
+.ind-warn { color: var(--orange); border-color: var(--orange); }
+
+/* Solid fill (не як WS-індикатор з border-only) -- статус трансляції
+   найважливіший, має виділятись сильніше за решту. */
+#broadcast-indicator {
+  min-width: 70px;
+}
+
+#ws-indicator {
+  width: 64px;
+}
+
+/* Leading zero padding on the ping reading (e.g. the "00" in "001 ms")
+   dimmed so the significant digits stand out at a glance. */
+.ping-zero {
+  color: var(--muted);
+}
+
+/* Аварійна кнопка HALT у шапці -- крайня справа. Активна лише під час
+   ефіру; вимкнена виглядає як приглушений контур. */
+.halt-button {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--red);
+  background: var(--red);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 0.04em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.halt-button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.halt-button:disabled {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.bstate-offline { background: var(--gray); border-color: var(--gray); color: #fff; }
+.bstate-live { background: var(--green); border-color: var(--green); color: #0c1f13; }
+.bstate-idle { background: var(--blue); border-color: var(--blue); color: #fff; }
+.bstate-fallback { background: var(--orange); border-color: var(--orange); color: #1a1d21; }
+.bstate-halt { background: var(--red); border-color: var(--red); color: #fff; }
+
+.status-up { color: var(--green); }
+.status-down { color: var(--muted); }
+.src-fix { color: var(--red); cursor: pointer; text-decoration: underline; }
+
+/* --- control tab --- */
+
+/* Фіксована розкладка -- колонки не "стрибають", коли значення
+   (uptime/ping/health/статус) міняють довжину щосекунди. Ширини задані
+   класами на th; Platform без ширини -> забирає решту. */
+.control-table {
+  table-layout: fixed;
+}
+
+.control-table th,
+.control-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;  /* усе по центру, крім першої колонки (Platform) */
+}
+
+.control-table th:first-child,
+.control-table td:first-child {
+  text-align: left;
+}
+
+.col-status { width: 104px; }
+.col-uptime { width: 72px; }
+.col-health { width: 140px; }
+.col-ping { width: 68px; }
+
+.control-toggle {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Колонка Platform: чекбокс + назва в один рядок. */
+.cell-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pf-label {
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pill {
+  display: inline-block;
+  /* Єдина ширина бейджів (по найдовшому тексту "Connecting"), щоб
+     колонка Status не міняла розкладку при зміні статусу. */
+  min-width: 84px;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 15px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.pill-live { color: var(--green); border-color: var(--green); }
+.pill-connecting { color: var(--orange); border-color: var(--orange); }
+.pill-fallback { color: var(--orange); border-color: var(--orange); }
+.pill-failed { color: var(--red); border-color: var(--red); }
+.pill-off { color: var(--muted); }
+
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 10px 0 0;
+  line-height: 1.4;
+}
+
+/* Значок драбини Enhanced Broadcasting: біля source у Status і біля
+   плеча в Control. */
+.pf-badge {
+  font-size: 0.72em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--orange);
+  border: 1px solid var(--orange);
+  border-radius: 3px;
+  padding: 0 3px;
+  cursor: help;
+}
+
+/* Приглушений варіант: EB увімкнено, але драбини на проводі ще не бачили.
+   Селектор СКЛАДЕНИЙ (не просто .pf-badge-idle): при однаковій
+   специфічності виграв би той, що нижче у файлі -- саме на цьому воно
+   попередньо й лишалось жовтим. */
+.pf-badge.pf-badge-idle {
+  color: var(--muted);
+  border-color: var(--border);
+}
+
+/* Status tab: one line per track (number/name + parameters). */
+.track-cell {
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+/* Role marker (★) replacing the "(primary)"/"(default)" suffixes; the title
+   attribute carries the hint ("Primary" / "Default") on hover. */
+.role-star {
+  color: var(--orange);
+  cursor: help;
+}
+
+/* --- per-group blocks (Control) --- */
+
+/* Each group's head reads as a title bar: it spans the panel's padding
+   (negative margins) with a recessed background + bottom divider. */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -14px -16px 12px;
+  padding: 9px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  border-radius: 4px 4px 0 0;
+}
+
+/* h2 inside a section head shouldn't keep the default bottom margin. */
+.section-head h2 {
+  margin: 0;
+}
+
+.section-title {
+  /* Flex so the title text and its ★ marker line up centered,
+     instead of an inline pill sitting slightly high off the baseline. */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--fg);
+}
+
+.section-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.group-toggle {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+/* Вузький док: ховаємо колонки по одній, найменш важливі першими. */
+@media (max-width: 560px) {
+  .control-table th:nth-child(3),
+  .control-table td:nth-child(3) { display: none; }
+}
+@media (max-width: 470px) {
+  .control-table th:nth-child(5),
+  .control-table td:nth-child(5) { display: none; }
+}
+@media (max-width: 390px) {
+  .control-table th:nth-child(4),
+  .control-table td:nth-child(4) { display: none; }
+}
+
+/* Вбудовані налаштування: перекривають док, зі смугою повернення зверху. */
+#config-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+#config-overlay[hidden] {
+  display: none;
+}
+
+.config-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.config-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#config-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  border: 0;
+}

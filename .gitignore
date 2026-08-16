@@ -1,0 +1,11 @@
+/build/
+/restreamd
+/restreamd.exe
+/bin/
+/config.json
+/config.json.broken-*
+/tmp/
+/media/
+/logs/
+/obs-dock.html
+/obs-source.html

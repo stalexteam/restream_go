@@ -1,0 +1,149 @@
+/*
+ * Спільне для обох сторінок дашборда: токени теми, каркас
+ * (панелі/таблиці/заголовки), тости й стан «звʼязку немає».
+ */
+:root {
+  color-scheme: dark;
+  --bg: #14161a;
+  --panel: #1c1f25;
+  --border: #2b2f37;
+  --fg: #e6e8eb;
+  --muted: #8b909a;
+  --green: #3ecf6b;
+  --orange: #e0a227;
+  --red: #e0524a;
+  --gray: #5b616b;
+  --blue: #4a90e0;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --border: #dde1e6;
+    --fg: #1a1d21;
+    --muted: #666c76;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+}
+
+h2 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px 16px;
+  margin-top: 8px;
+}
+
+.panel + .panel {
+  margin-top: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  padding: 6px 8px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+/* Немає /ws-з'єднання -- дані застарілі, форма нічого не збереже. */
+body.ws-disconnected .view {
+  filter: blur(0.8px);
+  opacity: 0.6;
+  pointer-events: none;
+  transition: filter 0.2s, opacity 0.2s;
+}
+
+#toast-container {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 8px 8px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0.92;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  animation: toast-in 0.2s ease-out;
+}
+
+.toast:hover {
+  opacity: 1;
+}
+
+.toast-info { background: var(--blue); }
+.toast-warning { background: var(--orange); color: #1a1d21; }
+.toast-error { background: var(--red); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Вузький док: ховаємо Uptime(3) -> Ping(5) -> Health(4); 1 Platform і
+   2 Status -- завжди. */
+
+/* Section header bar: same recessed title-bar look as a group head.
+   .panel > h2:first-child {
+  margin: -14px -16px 12px;
+  padding: 9px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  border-radius: 4px 4px 0 0;
+}

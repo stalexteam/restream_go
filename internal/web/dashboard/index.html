@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>restream-controller</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+<div id="toast-container"></div>
+
+<header>
+  <nav id="tab-nav" class="tabs">
+    <button type="button" class="tab-button active" data-tab="status">Status</button>
+    <button type="button" class="tab-button" data-tab="control">Control</button>
+    <!-- Виглядає як вкладка, але нею не є: налаштування -- окрема сторінка. -->
+    <button type="button" id="settings-btn" class="tab-button" title="Open the settings in a separate window">⚙ Settings</button>
+  </nav>
+  <div class="indicators">
+    <div id="ws-indicator" class="indicator ind-connecting" title="Connecting…">WS</div>
+    <div id="source-indicator" class="indicator ind-connecting" title="OBS browser-source not connected">SRC</div>
+    <div id="obs-indicator" class="indicator ind-connecting" title="No live data from OBS">OBS</div>
+    <div id="broadcast-indicator" class="indicator bstate-offline">Offline</div>
+    <button type="button" id="halt-btn" class="halt-button" title="Stop the broadcast on all platforms and tell OBS to stop" disabled>HALT</button>
+  </div>
+</header>
+
+<section id="tab-status" class="view tab-panel">
+  <div class="panel">
+    <h2>Sources</h2>
+    <table id="sources-table">
+      <thead>
+        <tr><th>Source</th><th>State</th><th>Video</th><th>Audio</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="components" class="panel">
+    <h2>Components</h2>
+    <table id="components-table">
+      <thead>
+        <tr><th>Component</th><th>Status</th><th>PID</th><th>CPU</th><th>Mem</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="tab-control" class="view tab-panel" hidden>
+  <!-- one platform table per group (rendered by JS) -->
+  <div id="control-groups"></div>
+</section>
+
+
+<!-- Налаштування всередині сторінки: у браузері окреме вікно світило б URL
+     із токеном. У доці OBS замість цього відкривається справжнє вікно. -->
+<div id="config-overlay" hidden>
+  <div class="config-bar">
+    <span class="config-title">Settings</span>
+    <button type="button" id="config-back" class="tab-button">Close</button>
+  </div>
+  <iframe id="config-frame" title="restream settings"></iframe>
+</div>
+
+<!-- one group block in the Control tab -->
+<template id="group-control-template">
+  <div class="panel group-panel">
+    <div class="section-head">
+      <label class="section-toggle-wrap">
+        <input type="checkbox" class="group-toggle" title="Shared switch for this group's platforms — unchecking mutes all of them at once (each platform still keeps its own checkbox)">
+        <h2 class="section-title"></h2>
+      </label>
+    </div>
+    <table class="control-table">
+      <thead>
+        <tr>
+          <th>Platform</th>
+          <th class="col-status">Status</th>
+          <th class="col-uptime">Uptime</th>
+          <th class="col-health">Health</th>
+          <th class="col-ping">Ping</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</template>
+
+
+<script src="shared.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

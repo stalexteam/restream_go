@@ -1,0 +1,56 @@
+{
+  "listen_host": "0.0.0.0",
+  "listen_port": 8790,
+
+  "public_host": "__PUBLIC_HOST__",
+
+  "dashboard_token": "__DASHBOARD_TOKEN__",
+
+  "mediamtx_rtmp_host": "127.0.0.1",
+  "mediamtx_rtmp_port": 1935,
+  "mediamtx_srt_port": 8890,
+  "obs_pass": "__OBS_PASS__",
+  "internal_user": "internal",
+  "internal_pass": "__INTERNAL_PASS__",
+
+  "fallback_presets": [
+    {
+      "id": "default",
+      "name": "Default",
+      "is_default": true,
+      "type": "sequence",
+      "start_file": "",
+      "loop_file": "backup.mp4",
+      "end_file": ""
+    }
+  ],
+
+  "sources": [
+    {
+      "name": "Main",
+      "is_default": true,
+      "type": "rtmp",
+      "live_path": "live/main",
+      "audio_tracks": 1
+    }
+  ],
+
+  "platform_groups": [
+    {
+      "id": "default",
+      "name": "Default",
+      "is_default": true,
+      "enabled": true
+    }
+  ],
+
+  "platforms": [],
+
+  "offline_timeout_sec": 1800,
+  "connect_timeout_ms": 5000,
+  "read_timeout_ms": 500,
+  "max_concurrent_transcodes": 1,
+  "transcode_threads": 1,
+  "icmp_ping": false,
+  "obs_widget_show_bitrate": false
+}

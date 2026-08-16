@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1070 810" role="img" aria-label="OBS publishes over RTMP or SRT through your fragile uplink into MediaMTX on the VPS; an optional obs-multi-rtmp output inside OBS can publish extra scenes (e.g. a vertical one) as separate sources. The restream-controller builds each platform its own stream with its own audio pick and an automatic live/backup switch — audio #1 is the full mix, audio #2 has no background music; Twitch takes both (#1 live, #2 as its VOD track), YouTube takes the music-free #2, Kick takes #1 over SRT — and pushes over connections that survive your uplink dropping. The OBS dock and obs-source talk to the controller's internal web server over HTTP/WS." font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#9198a1"/>
+    </marker>
+    <marker id="ma" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#f0883e"/>
+    </marker>
+  </defs>
+
+  <!-- ===== Your PC ===== -->
+  <rect x="20" y="70" width="195" height="230" rx="8" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="117" y="100" text-anchor="middle" font-size="13" font-weight="bold" fill="#e6edf3">OBS — your PC</text>
+  <text x="117" y="122" text-anchor="middle" font-size="11" fill="#9198a1">publish once — video + 2 audio</text>
+  <text x="117" y="140" text-anchor="middle" font-size="10.5" fill="#9198a1">audio #1 — full mix</text>
+  <text x="117" y="156" text-anchor="middle" font-size="10.5" fill="#9198a1">audio #2 — no background music</text>
+  <text x="117" y="178" text-anchor="middle" font-size="10.5" fill="#9198a1">Server + Key from the dashboard</text>
+
+  <rect x="32" y="190" width="171" height="88" rx="8" fill="none" stroke="#9198a1" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="117" y="214" text-anchor="middle" font-size="11" font-weight="bold" fill="#e6edf3">obs-multi-rtmp — optional</text>
+  <text x="117" y="234" text-anchor="middle" font-size="10.5" fill="#9198a1">extra output, its own scene</text>
+  <text x="117" y="250" text-anchor="middle" font-size="10.5" fill="#9198a1">e.g. vertical for Instagram</text>
+
+  <!-- ===== ingest edges (the fragile uplink) ===== -->
+  <line x1="215" y1="150" x2="327" y2="150" stroke="#9198a1" stroke-width="1.5" marker-end="url(#m)"/>
+  <text x="268" y="138" text-anchor="middle" font-size="10.5" fill="#9198a1">RTMP / SRT</text>
+  <text x="268" y="168" text-anchor="middle" font-size="10.5" fill="#f0883e">(can drop)</text>
+
+  <path d="M203 234 H390 V201" fill="none" stroke="#9198a1" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#m)"/>
+  <text x="265" y="251" text-anchor="middle" font-size="10.5" fill="#9198a1">RTMP / SRT</text>
+  <text x="265" y="266" text-anchor="middle" font-size="10.5" fill="#f0883e">(can drop)</text>
+
+  <!-- dashboard box + edge -->
+  <rect x="20" y="530" width="195" height="120" rx="8" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="117" y="557" text-anchor="middle" font-size="13" font-weight="bold" fill="#e6edf3">OBS dock + obs-source</text>
+  <text x="117" y="579" text-anchor="middle" font-size="11" fill="#9198a1">dashboard in a dock</text>
+  <text x="117" y="597" text-anchor="middle" font-size="11" fill="#9198a1">invisible Browser Source</text>
+  <text x="117" y="615" text-anchor="middle" font-size="11" fill="#9198a1">detects Start / Stop</text>
+
+  <line x1="215" y1="590" x2="507" y2="590" stroke="#9198a1" stroke-width="1.5" marker-start="url(#m)" marker-end="url(#m)"/>
+  <text x="353" y="578" text-anchor="middle" font-size="10.5" fill="#9198a1">HTTP / WS</text>
+
+  <!-- ===== VPS ===== -->
+  <rect x="315" y="30" width="485" height="750" rx="10" fill="none" stroke="#3d444d" stroke-width="1.5"/>
+  <text x="333" y="58" font-size="13" font-weight="bold" fill="#e6edf3">VPS</text>
+  <text x="365" y="58" font-size="11" fill="#9198a1">— Debian, set up by install.sh</text>
+  <text x="333" y="768" font-size="10.5" fill="#9198a1">firewall: expose only 1935/tcp (RTMP) · 8890/udp (SRT) · 8790/tcp (dashboard)</text>
+
+  <!-- MediaMTX -->
+  <rect x="335" y="105" width="130" height="90" rx="8" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="400" y="143" text-anchor="middle" font-size="12" font-weight="bold" fill="#e6edf3">MediaMTX</text>
+  <text x="400" y="163" text-anchor="middle" font-size="11" fill="#9198a1">ingest · auth</text>
+
+  <!-- controller region -->
+  <rect x="492" y="88" width="296" height="640" rx="10" fill="none" stroke="#3d444d" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="508" y="112" font-size="12" font-weight="bold" fill="#e6edf3">restream-controller</text>
+
+  <!-- fan-out: readback per platform -->
+  <line x1="465" y1="142" x2="507" y2="148" stroke="#9198a1" stroke-width="1.5" marker-end="url(#m)"/>
+  <line x1="465" y1="165" x2="507" y2="264" stroke="#9198a1" stroke-width="1.5" marker-end="url(#m)"/>
+  <line x1="465" y1="180" x2="507" y2="384" stroke="#9198a1" stroke-width="1.5" marker-end="url(#m)"/>
+  <line x1="465" y1="190" x2="507" y2="502" stroke="#9198a1" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#m)"/>
+
+  <!-- lane 1: YouTube -->
+  <rect x="515" y="127" width="145" height="46" rx="6" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="587" y="154" text-anchor="middle" font-size="11" fill="#e6edf3">video + audio #2</text>
+  <rect x="692" y="127" width="88" height="46" rx="6" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="736" y="148" text-anchor="middle" font-size="11" fill="#e6edf3">live ⇄ backup</text>
+  <text x="736" y="164" text-anchor="middle" font-size="9.5" fill="#9198a1">auto-switch</text>
+  <line x1="660" y1="150" x2="686" y2="150" stroke="#9198a1" stroke-width="1.5" marker-end="url(#m)"/>
+  <line x1="780" y1="150" x2="862" y2="150" stroke="#9198a1" stroke-width="1.5" marker-end="url(#m)"/>
+
+  <!-- lane 2: Twitch (RTMP+VOD, two audio tracks) -->
+  <rect x="515" y="247" width="145" height="46" rx="6" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="587" y="268" text-anchor="middle" font-size="11" fill="#e6edf3">video + audio #1 (live)</text>
+  <text x="587" y="284" text-anchor="middle" font-size="10.5" fill="#9198a1">+ audio #2 (VOD)</text>
+  <rect x="692" y="247" width="88" height="46" rx="6" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="736" y="268" text-anchor="middle" font-size="11" fill="#e6edf3">live ⇄ backup</text>
+  <text x="736" y="284" text-anchor="middle" font-size="9.5" fill="#9198a1">auto-switch</text>
+  <line x1="660" y1="270" x2="686" y2="270" stroke="#9198a1" stroke-width="1.5" marker-end="url(#m)"/>
+  <line x1="780" y1="270" x2="862" y2="270" stroke="#9198a1" stroke-width="1.5" marker-end="url(#m)"/>
+
+  <!-- lane 3: Kick (SRT, single track) -->
+  <rect x="515" y="367" width="145" height="46" rx="6" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="587" y="394" text-anchor="middle" font-size="11" fill="#e6edf3">video + audio #1</text>
+  <rect x="692" y="367" width="88" height="46" rx="6" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="736" y="388" text-anchor="middle" font-size="11" fill="#e6edf3">live ⇄ backup</text>
+  <text x="736" y="404" text-anchor="middle" font-size="9.5" fill="#9198a1">auto-switch</text>
+  <line x1="660" y1="390" x2="686" y2="390" stroke="#9198a1" stroke-width="1.5" marker-end="url(#m)"/>
+  <line x1="780" y1="390" x2="862" y2="390" stroke="#9198a1" stroke-width="1.5" marker-end="url(#m)"/>
+
+  <!-- lane 4: vertical (optional source) -->
+  <rect x="515" y="487" width="145" height="46" rx="6" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="587" y="514" text-anchor="middle" font-size="11" fill="#e6edf3">vertical + audio #1</text>
+  <rect x="692" y="487" width="88" height="46" rx="6" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="736" y="508" text-anchor="middle" font-size="11" fill="#e6edf3">live ⇄ backup</text>
+  <text x="736" y="524" text-anchor="middle" font-size="9.5" fill="#9198a1">auto-switch</text>
+  <line x1="660" y1="510" x2="686" y2="510" stroke="#9198a1" stroke-width="1.5" marker-end="url(#m)"/>
+  <line x1="780" y1="510" x2="862" y2="510" stroke="#9198a1" stroke-width="1.5" marker-end="url(#m)"/>
+
+  <!-- internal web-server -->
+  <rect x="515" y="568" width="150" height="44" rx="6" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="590" y="586" text-anchor="middle" font-size="11" font-weight="bold" fill="#e6edf3">internal web-server</text>
+  <text x="590" y="602" text-anchor="middle" font-size="10.5" fill="#9198a1">dashboard · /ws</text>
+
+  <!-- backup video + routes -->
+  <rect x="515" y="660" width="150" height="50" rx="8" fill="none" stroke="#f0883e" stroke-width="1.5"/>
+  <text x="590" y="681" text-anchor="middle" font-size="12" font-weight="bold" fill="#f0883e">backup video</text>
+  <text x="590" y="699" text-anchor="middle" font-size="11" fill="#f0883e">fallback preset</text>
+  <path d="M665 685 H670 V164 H686" fill="none" stroke="#f0883e" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ma)"/>
+  <line x1="670" y1="284" x2="686" y2="284" stroke="#f0883e" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ma)"/>
+  <line x1="670" y1="404" x2="686" y2="404" stroke="#f0883e" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ma)"/>
+  <line x1="670" y1="524" x2="686" y2="524" stroke="#f0883e" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ma)"/>
+  <circle cx="670" cy="284" r="3.2" fill="#f0883e"/>
+  <circle cx="670" cy="404" r="3.2" fill="#f0883e"/>
+  <circle cx="670" cy="524" r="3.2" fill="#f0883e"/>
+
+  <!-- ===== platforms ===== -->
+  <rect x="870" y="127" width="180" height="46" rx="8" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="960" y="155" text-anchor="middle" font-size="13" font-weight="bold" fill="#e6edf3">YouTube</text>
+  <text x="960" y="190" text-anchor="middle" font-size="10.5" fill="#9198a1">push: RTMP · stream key</text>
+
+  <rect x="870" y="247" width="180" height="46" rx="8" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="960" y="275" text-anchor="middle" font-size="13" font-weight="bold" fill="#e6edf3">Twitch</text>
+  <text x="960" y="310" text-anchor="middle" font-size="10.5" fill="#9198a1">push: RTMP(S) · audio #2 → VOD</text>
+
+  <rect x="870" y="367" width="180" height="46" rx="8" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="960" y="395" text-anchor="middle" font-size="13" font-weight="bold" fill="#e6edf3">Kick</text>
+  <text x="960" y="430" text-anchor="middle" font-size="10.5" fill="#9198a1">push: SRT udp/9000 · streamid</text>
+
+  <rect x="870" y="487" width="180" height="46" rx="8" fill="none" stroke="#9198a1" stroke-width="1.5"/>
+  <text x="960" y="515" text-anchor="middle" font-size="13" font-weight="bold" fill="#e6edf3">Instagram</text>
+  <text x="960" y="550" text-anchor="middle" font-size="10.5" fill="#9198a1">push: RTMP · vertical scene</text>
+
+  <text x="960" y="592" text-anchor="middle" font-size="10.5" fill="#9198a1">… any number of platforms,</text>
+  <text x="960" y="608" text-anchor="middle" font-size="10.5" fill="#9198a1">toggled live from the dashboard</text>
+</svg>

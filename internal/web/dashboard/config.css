@@ -1,0 +1,1064 @@
+/*
+ * Сторінка налаштувань (/config): форми, модалки, конструктор
+ * потоку платформи й файловий менеджер backup/.
+ */
+#settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.field input,
+.field select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 9px;
+}
+
+/* Native <select> is short and uses OS colors -- match the text inputs:
+   same height/padding/border, themed chevron, no OS accent. */
+.field select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  /* room for the chevron; a themed SVG arrow drawn via background. */
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%238b909a' d='M2 4l4 4 4-4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: -1px;
+}
+
+/* The open dropdown list: Chromium (incl. the OBS Custom Browser Dock) honors
+   option background/color, so theme the popup instead of OS defaults. The
+   padding only takes effect where the customizable select is supported (see
+   @supports below); it's harmless on older native popups that ignore it. */
+.field select option {
+  background: var(--panel);
+  color: var(--fg);
+  padding: 9px 12px;
+}
+.field select option:checked {
+  background: var(--blue);
+  color: #fff;
+}
+
+/* Customizable <select> (Chrome 135+, incl. recent CEF/OBS dock): fully style
+   the popup -- taller items and a popover radius that matches the inputs
+   (4px), instead of the browser's default rounding. Older browsers ignore
+   this block and keep the native popup above. */
+@supports (appearance: base-select) {
+  .field select {
+    appearance: base-select;
+    background-image: none;  /* base-select draws its own ::picker-icon */
+    padding-right: 9px;
+  }
+  .field select::picker(select) {
+    appearance: base-select;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  }
+  .field select option {
+    border-radius: 4px;
+  }
+  .field select option:hover {
+    background: var(--border);
+  }
+  .field select::picker-icon {
+    color: var(--muted);
+  }
+}
+
+/* Лейбл + контрол в один рядок (слайдер доріжок). */
+.field-inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.field-inline label {
+  flex: 0 0 auto;
+}
+
+.field-inline select {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.field-inline input[type="range"] {
+  flex: 1 1 auto;
+  width: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+
+.field-inline input[type="range"]:focus {
+  outline: none;
+}
+
+/* Залежний від чекбокса контрол у тому самому рядку (Enhanced Broadcasting
+   + Maximum Video tracks) -- притиснутий до правого краю поля. */
+.inline-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.inline-group[hidden] {
+  display: none;
+}
+
+.slider-value {
+  flex: 0 0 auto;
+  min-width: 1.5em;
+  text-align: center;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+/* Чекбокс-поле: лейбл із чекбоксом в один рядок (не колонкою, як
+   текстові поля), чекбокс не розтягуємо на всю ширину. */
+.field-check label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.field-check input {
+  width: auto;
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.reveal-toggle {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.reveal-toggle:hover {
+  color: var(--fg);
+}
+
+.errors {
+  font-size: 12px;
+  color: var(--red);
+  flex-direction: column;
+  gap: 2px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.actions button {
+  /* appearance:none -- інакше нативний <button> у деяких рушіях (CEF в
+     OBS зокрема) додає власні внутрішні метрики, і кнопка з фоном
+     (.primary) та без нього виходять різної висоти. */
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.3;
+  padding: 7px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.actions button:hover {
+  border-color: var(--muted);
+}
+
+.actions button.primary {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+
+.actions button.primary:hover {
+  opacity: 0.9;
+}
+
+/* --- settings: item lists (sources / platforms / groups / presets) --- */
+
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.item-row:last-child {
+  border-bottom: none;
+}
+
+.item-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Короткий підпис рядка (тип · source · група). */
+.item-tag {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.85em;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preset-hint {
+  font-size: 0.82em;
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+.ghost-button.danger,
+button.danger {
+  color: var(--danger, #d64545);
+}
+.ghost-button.danger:hover,
+button.danger:hover {
+  border-color: var(--danger, #d64545);
+}
+
+/* Buttons pinned to the right of the item row (Modify is last). */
+.item-actions {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.icon-button {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.3;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  color: var(--fg);
+  border-color: var(--muted);
+}
+
+.item-delete:hover {
+  color: var(--red);
+  border-color: var(--red);
+}
+
+/* Тонкий сучасний горизонтальний скролбар для превʼю (нативний --
+   зависокий). Firefox -- scrollbar-*; WebKit/CEF -- ::-webkit. */
+.preview {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray) transparent;
+}
+
+.preview::-webkit-scrollbar {
+  height: 6px;
+}
+
+.preview::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.preview::-webkit-scrollbar-thumb {
+  background: var(--gray);
+  border-radius: 3px;
+}
+
+.preview::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* --- add/modify modal --- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;  /* 16px margin around the modal on every side */
+}
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+/* Модалка поверх модалки: рівень явний, бо порядок у DOM ненадійний --
+   менеджер відкривається і з панелі, і з модалки пресета. L2 -- відкриті
+   з модалки, L3 -- відкриті з L2. */
+.modal-l2 {
+  z-index: 910;
+}
+
+.modal-l3 {
+  z-index: 920;
+}
+
+/* Списки файлів -- на всю висоту, з тим самим відступом, що й з боків. */
+#files-modal .modal,
+#picker-modal .modal {
+  height: 100%;
+}
+
+#files-modal .fm-rows,
+#picker-modal .fm-rows {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;  /* без цього flex-елемент не стискається нижче вмісту */
+}
+
+.modal {
+  width: 100%;  /* майже на всю ширину -- лишає лише 16px overlay-паддінгу по боках */
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Title + action bars: recessed strips spanning the modal's padding
+   (negative margins), a header on top and a footer at the bottom, each
+   with a divider -- same title-bar look as .section-head. */
+.modal h2 {
+  margin: -16px -16px 0;
+  padding: 11px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  border-radius: 8px 8px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--fg);
+}
+
+.modal .actions {
+  margin: 0 -16px -16px;
+  padding: 12px 16px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 8px 8px;
+}
+
+.preview {
+  background: var(--bg);
+  /* Dashed border (vs the solid border on editable inputs) marks this as a
+     read-only, display-only field. Text stays at full contrast so the
+     url/key remains legible and copyable. */
+  border: 1px dashed var(--gray);
+  border-radius: 4px;
+  padding: 7px 9px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--fg);
+  /* Один рядок + горизонтальний скрол + виділення одним кліком, копіюється
+     повністю. overflow-x:scroll (не auto) РЕЗЕРВУЄ місце під смугу завжди,
+     тож поле не росте у висоту, коли довгий url з'являється/ховається; трек
+     смуги прозорий -> коли текст влазить, візуально нічого не видно. */
+  white-space: nowrap;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+.ghost-button {
+  appearance: none;
+  -webkit-appearance: none;
+  align-self: flex-start;
+  margin-top: 10px;
+  background: transparent;
+  border: 1px solid var(--blue);
+  border-radius: 4px;
+  color: var(--blue);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+.ghost-button:hover {
+  background: var(--blue);
+  color: #fff;
+}
+
+/* Вимкнена ghost-кнопка (↑ у корені backup/) мусить виглядати вимкненою:
+   без цього вона лишалась акцентно-синьою й читалась як робоча. */
+.ghost-button:disabled {
+  border-color: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.ghost-button:disabled:hover {
+  background: transparent;
+  color: var(--muted);
+}
+
+.field-two {
+  display: flex;
+  gap: 10px;
+}
+
+.field-two .field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Права колонка конструктора: Live-аудіо, під ним VOD-аудіо. */
+.field-two .field-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Конструктор потоку: Video source | Audio track
+                       Twitch VOD Track | VOD audio track
+   Саме СІТКА, а не дві колонки-флекси: рядок спільний для обох колонок,
+   тож чекбокс і сусідній комбобокс вирівняні по вертикальному центру
+   (align-items: center), а лівий край чекбокса збігається з лівим краєм
+   селекта над ним -- обидва починаються від краю тієї самої колонки. */
+.stream-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: end;
+}
+
+/* Чекбокс має збігтися по центру САМЕ з комбобоксом сусідньої клітинки, а
+   не з полем цілком (у поля зверху ще лейбл). Тому: тримається низу рядка
+   (як і селект) і займає висоту селекта -- 13px тексту + 7px паддінгу
+   зверху/знизу + 1px рамки з кожного боку. */
+.stream-grid .field-check {
+  min-height: calc(13px + 14px + 2px + 4px);
+  justify-content: center;
+}
+
+/* SRT-платформа: аудіо-колонки немає -- Video source займає весь рядок. */
+.stream-grid.no-audio #pmodal-source-field {
+  grid-column: 1 / -1;
+}
+
+/* Конструктор потоку платформи; праворуч -- кнопка Clone на всю висоту. */
+.stream-panel {
+  display: flex;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.stream-panel-fields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* SRT-custom: до 6 "Track #N" селектів (output-слот -> джерельна доріжка),
+   3 в ряд (Track #1-3 / #4-6 -- звичайна grid-авторозкладка рядками). */
+#pmodal-track-map {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+#pmodal-track-map[hidden] {
+  display: none;
+}
+
+.clone-fill {
+  align-self: stretch;
+  background: transparent;
+  border: 1px solid var(--blue);
+  border-radius: 4px;
+  color: var(--blue);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 10px;
+  cursor: pointer;
+  /* select, замаскований під кнопку: без нативної стрілки */
+  appearance: none;
+  text-align: center;
+}
+
+.clone-fill:hover {
+  background: var(--blue);
+  color: #fff;
+}
+
+.clone-fill[hidden] {
+  display: none;
+}
+.panel-head {
+  margin: -14px -16px 12px;
+  padding: 9px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  border-radius: 4px 4px 0 0;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.panel-head h2 {
+  margin: 0;
+}
+
+.panel-head .ghost-button {
+  margin-top: 0;
+  align-self: auto;
+}
+
+/* Masked-secret grid, shared by the modify modals: sensitive rows (label +
+   value on one line each) with a single tall Show/Hide button spanning them
+   on the right. The source modal fills the value cells with read-only
+   previews; the platform modal with inputs plus a full-width Final URL row
+   underneath. .rows-N sets how many rows the button spans. */
+.masked-grid {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 6px 8px;
+  align-items: center;
+}
+
+/* display:grid перебиває UA-правило [hidden] (та сама грабля, що .field). */
+.masked-grid[hidden] {
+  display: none;
+}
+
+.masked-grid-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.masked-grid input {
+  width: 100%;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  font-family: ui-monospace, monospace;
+  padding: 7px 9px;
+}
+
+.masked-grid input:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: -1px;
+}
+
+.masked-grid-toggle {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  align-self: stretch;
+  /* Fixed width so the Show/Hide text swap doesn't reflow the grid. */
+  min-width: 60px;
+  text-align: center;
+}
+
+.masked-grid.rows-1 .masked-grid-toggle { grid-row: 1; }
+.masked-grid.rows-3 .masked-grid-toggle { grid-row: 1 / span 3; }
+
+/* Final URL row under the sensitive rows -- spans the value + button
+   columns (the tall Show button covers only the credential rows above). */
+.masked-grid-full {
+  grid-column: 2 / span 2;
+}
+
+/* Дві кнопки в шапці панелі (Fallback presets: Files + Add) -- заголовок
+   росте, кнопки лишаються поруч праворуч; для панелей з однією кнопкою
+   вигляд не міняється. */
+.panel-head h2 {
+  flex: 1 1 auto;
+}
+
+.actions .spacer {
+  flex: 1 1 auto;
+}
+
+/* --- матеріал заглушки в backup/: файловий менеджер і пікери --- */
+
+/* Поле шляху + Browse в одному рядку (модалка пресета). */
+.path-row {
+  display: flex;
+  gap: 6px;
+}
+
+.path-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: ui-monospace, monospace;
+}
+
+.path-row .ghost-button {
+  flex: 0 0 auto;
+  margin-top: 0;
+  align-self: auto;
+}
+
+/* Корінь -- окремий чанк, а не текст в інпуті: щоб його не стерли. */
+.path-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.path-field:focus-within {
+  outline: 2px solid var(--blue);
+  outline-offset: -1px;
+}
+
+.path-prefix {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.path-field input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  font-family: ui-monospace, monospace;
+  padding: 7px 9px;
+}
+
+.path-field input:focus {
+  outline: none;
+}
+
+.fm-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fm-bar .ghost-button {
+  margin-top: 0;
+  align-self: auto;
+}
+
+.fm-up {
+  flex: 0 0 auto;
+  min-width: 32px;
+  text-align: center;
+}
+
+.fm-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.fm-drop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px dashed var(--blue);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--blue) 8%, transparent);
+}
+
+.fm-drop.dragging {
+  background: color-mix(in srgb, var(--blue) 20%, transparent);
+}
+
+.fm-drop-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--fg);
+}
+
+.fm-drop .ghost-button {
+  flex: 0 0 auto;
+  margin-top: 0;
+  align-self: auto;
+}
+
+.ghost-button.accent {
+  color: var(--blue);
+  border-color: var(--blue);
+}
+
+/* Фіксована висота: модалка не стрибає між папками на 2 і на 200 файлів. */
+.fm-rows {
+  height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+}
+
+/* Два яруси: таблиця NAME/SIZE/LENGTH/дії в один рядок у док не влазить. */
+.fm-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "name actions"
+    "meta actions";
+  align-items: center;
+  gap: 1px 10px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.fm-row:last-child {
+  border-bottom: none;
+}
+
+.fm-row:hover {
+  background: var(--panel);
+}
+
+.fm-row.selected {
+  background: color-mix(in srgb, var(--blue) 18%, transparent);
+  box-shadow: inset 2px 0 0 var(--blue);
+}
+
+.fm-name {
+  grid-area: name;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.fm-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fm-row.is-file .fm-label {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.fm-meta {
+  grid-area: meta;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.fm-actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fm-actions button {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--fg);
+  font: inherit;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.fm-actions button:hover {
+  border-color: var(--muted);
+}
+
+.fm-actions button.danger:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* Тека -- заливка, файл -- контур. */
+.fm-glyph {
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 12px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--gray);
+}
+
+.fm-glyph.file {
+  width: 9px;
+  height: 11px;
+  background: transparent;
+  border: 1px solid var(--gray);
+}
+
+.fm-row.selected .fm-glyph {
+  background: var(--blue);
+}
+
+.fm-row.selected .fm-glyph.file {
+  background: transparent;
+  border-color: var(--blue);
+}
+
+.fm-radio {
+  flex: 0 0 auto;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid var(--gray);
+}
+
+.fm-row.selected .fm-radio {
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
+.fm-empty {
+  padding: 14px 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* --- аплоад --- */
+
+.up-name {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.up-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.up-fill {
+  height: 100%;
+  width: 0;
+  background: var(--blue);
+}
+
+.up-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.up-meta span:first-child {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+/* A class rule with `display` beats the UA `[hidden]{display:none}`, so a
+   `.field` toggled via the hidden attribute (e.g. the OBS output block)
+   needs this to actually hide. */
+.field[hidden] {
+  display: none;
+}
+
+/* Специфічність класу перебиває UA-правило `[hidden]{display:none}` --
+   без цього `hidden=true` не ховає блок, доки він `display:flex`. */
+.errors:not([hidden]) {
+  display: flex;
+}
+
+/* Той самий фікс, що й .field[hidden] вище: `display:flex` тут переважає
+   UA `[hidden]{display:none}` за специфічністю. */
+.field-two .field-col[hidden] {
+  display: none;
+}
+
+/* --- превʼю відео --- */
+
+.preview-video {
+  /* По вмісту, не на весь екран: 16:9 у повновисокій модалці тонув
+     серед чорних полів. Стеля тримає вертикальне відео у вікні. */
+  width: 100%;
+  max-height: 70vh;
+  background: #000;
+  border-radius: 4px;
+}
+
+/* Формат, який рушій не вміє (mkv/ts/avi). */
+.preview-note {
+  font-size: 12px;
+  color: var(--orange);
+  line-height: 1.4;
+}
+
+.preview-note[hidden] {
+  display: none;
+}
+
+.preview-meta {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* --- автодоповнення шляху --- */
+
+.path-row {
+  position: relative;  /* якір для випадайки під полем */
+}
+
+.path-suggest {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin-top: 2px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+.path-suggest[hidden] {
+  display: none;
+}
+
+.path-suggest-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 9px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.path-suggest-item.active,
+.path-suggest-item:hover {
+  background: var(--bg);
+}
+
+.path-suggest-count {
+  flex: 0 0 auto;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* Шлях не існує або веде не туди; OK при цьому вимкнений. */
+.path-row input.invalid {
+  border-color: var(--red);
+}
+
+.path-error {
+  font-size: 11px;
+  color: var(--red);
+}
+
+.path-error[hidden] {
+  display: none;
+}
