@@ -6,20 +6,24 @@ Continuous OBS -> multi-platform restreaming: publish once from OBS (RTMP, or SR
 
 ## Quick start
 
-Take a prebuilt `restreamd` from the [releases page](https://github.com/stalexteam/restream_go/releases/latest), or build one — a Go toolchain and a script, no dependencies to resolve:
+Grab an archive from the [releases page](https://github.com/stalexteam/restream_go/releases/latest) — `build_<version>_linux64.tar.gz` for a server, `build_<version>_win64.tar.gz` for Windows — and unpack it into a directory of its own, which becomes the installation:
+
+```bash
+mkdir -p ~/restream && cd ~/restream
+tar -xzf ~/build_0.1.0_linux64.tar.gz   # -> restreamd + install.sh
+./install.sh                            # packages, MediaMTX, systemd unit, config
+sudo systemctl start restreamd
+```
+
+Or build both archives yourself — a Go toolchain and a script, no dependencies to resolve:
 
 ```bash
 git clone https://github.com/stalexteam/restream_go.git && cd restream_go
-./build.sh                       # -> build/restreamd + build/install.sh
-scp -r build/ user@vps:~/restream
+./build.sh                              # -> build/build_<version>_{linux64,win64}.tar.gz
+scp build/build_0.1.0_linux64.tar.gz user@vps:~/
 ```
 
-Then, on the server:
-
-```bash
-cd ~/restream && ./install.sh    # packages, MediaMTX, systemd unit, config
-sudo systemctl start restreamd
-```
+On Windows the other archive gives you `restreamd.exe` and `install.ps1`; run the installer from PowerShell in the folder you unpacked into — it fetches ffmpeg and MediaMTX and walks through the same configuration. There is no service on Windows: the console window is the service.
 
 `install.sh` prints the dashboard URL and the two generated OBS files to point OBS at. The full walkthrough — OBS settings, sources, platforms — is in **[Setup](Doc/Setup/Setup.md)**.
 
@@ -27,7 +31,7 @@ sudo systemctl start restreamd
 
 - **[What it does](Doc/Overview/Overview.md)** - the feature tour: sources vs platforms, fallback, groups, contracts.
 - **[Setup & operation](Doc/Setup/Setup.md)** - prerequisites, install, configuring OBS and platforms, and day-to-day management.
-- **[Build from sources](Doc/Build/Build.md)** - one Go toolchain, `./build.sh`, and the `build/` directory you copy to the server.
+- **[Build from sources](Doc/Build/Build.md)** - one Go toolchain, `./build.sh`, versioning, and the two release archives it produces.
 - **[Everyday scenarios](Doc/Scenarios/Scenarios.md)** - how the service behaves when things happen: drops, stops, wrong keys, mid-stream changes.
 - **[Troubleshooting](Doc/Troubleshooting/Troubleshooting.md)** - when something misbehaves.
 
@@ -48,4 +52,4 @@ This is built for a VPS you own, reachable only by you: the dashboard and both i
 
 MIT — see **[LICENSE](LICENSE)**.
 
-The controller is a single standard-library Go binary — no third-party modules, nothing vendored — and the dashboard it serves uses no third-party JavaScript or CSS. MediaMTX, FFmpeg and srt-tools are installed on your machine by `install.sh` rather than redistributed here; **[THIRD-PARTY.md](THIRD-PARTY.md)** lists them and their licenses.
+The controller is a single standard-library Go binary — no third-party modules, nothing vendored — and the dashboard it serves uses no third-party JavaScript or CSS. MediaMTX and FFmpeg are installed on your machine by `install.sh` rather than redistributed here; **[THIRD-PARTY.md](THIRD-PARTY.md)** lists them and their licenses.

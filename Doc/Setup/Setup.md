@@ -4,7 +4,7 @@ Follow these steps in order and you'll have one platform live. The rest — extr
 
 ## Prerequisites
 
-- A VPS (Debian/Ubuntu, sudo, a public IP OBS can reach — a local Linux box/WSL works for testing; Windows works too, minus the installer, see step 1).
+- A VPS (Debian/Ubuntu, sudo, a public IP OBS can reach — a local Linux box/WSL works for testing; Windows works too, with its own installer, see step 1).
 - OBS Studio on your streaming machine.
 - Your platform's **RTMP Server + Stream Key** (Twitch/YouTube/Kick/…).
 - A **backup video** to loop if your connection drops — any format `ffmpeg` reads (it's auto-matched to your stream).
@@ -13,20 +13,22 @@ Follow these steps in order and you'll have one platform live. The rest — extr
 
 The controller ships as a single binary with the dashboard inside it. You either take a prebuilt one or build it yourself; either way you end up with a directory holding `restreamd` and `install.sh`, and that directory *is* the installation — everything the controller creates later (`config.json`, `bin/`, `media/`, `logs/`, `tmp/`) lands next to the binary.
 
-**Option A — prebuilt release.** Download the Linux x86-64 archive from the [releases page](https://github.com/stalexteam/restream_go/releases/latest) and unpack it on the server:
+**Option A — prebuilt release.** Download `build_<version>_linux64.tar.gz` from the [releases page](https://github.com/stalexteam/restream_go/releases/latest) and unpack it on the server. The archive holds just the two files, with no directory of its own, so unpack it into one:
 
 ```bash
 mkdir -p ~/restream && cd ~/restream
-tar -xzf ~/restreamd_linux_amd64.tar.gz
+tar -xzf ~/build_0.1.0_linux64.tar.gz
 ```
 
-**Option B — build from sources.** One Go toolchain and one script; the result is `build/`, which you copy to the server — see **[Build from sources](../Build/Build.md)**:
+**Option B — build from sources.** One Go toolchain and one script. It builds both platforms at once and packs each into its own archive — see **[Build from sources](../Build/Build.md)**:
 
 ```bash
 git clone https://github.com/stalexteam/restream_go.git && cd restream_go
 ./build.sh
-scp -r build/ user@vps:~/restream
+scp build/build_0.1.0_linux64.tar.gz user@vps:~/
 ```
+
+Then unpack it on the server exactly as in Option A.
 
 Then, on the server, in that directory:
 
@@ -34,7 +36,7 @@ Then, on the server, in that directory:
 ./install.sh
 ```
 
-It installs `ffmpeg` + `srt-tools` and MediaMTX, registers the `restreamd` systemd service, and hands over to `restreamd --config`, which asks for this server's public IP/hostname and writes `config.json` (the only file you edit by hand — and mostly you won't, the dashboard's settings window covers it). At the end it prints, highlighted: the **dashboard URL with its token**, the paths to two generated local files — **`obs-dock.html`** (the dashboard) and **`obs-source.html`** (the OBS browser source) — the start/stop/logs commands, and the firewall ports to open. Re-print all of it anytime with `./restreamd --config`.
+It installs `ffmpeg` and MediaMTX, registers the `restreamd` systemd service, and hands over to `restreamd --config`, which asks for this server's public IP/hostname and writes `config.json` (the only file you edit by hand — and mostly you won't, the dashboard's settings window covers it). At the end it prints, highlighted: the **dashboard URL with its token**, the paths to two generated local files — **`obs-dock.html`** (the dashboard) and **`obs-source.html`** (the OBS browser source) — the start/stop/logs commands, and the firewall ports to open. Re-print all of it anytime with `./restreamd --config`.
 
 ![./install.sh output — the public-host prompt, then the dashboard URL, the obs-dock/obs-source paths, the control commands and the firewall ports](setup_Installsh.png)
 
@@ -52,7 +54,17 @@ sudo systemctl stop restreamd
 
 Without systemd (a container, WSL), run `./restreamd` from the install directory instead. Re-print the dashboard link and the OBS file paths anytime with `./restreamd --config`: it only asks for the public host again (Enter keeps the current one) and rewrites the OBS files — your platforms, sources and secrets stay as they are.
 
-**On Windows it looks different.** `install.sh` is Debian/Ubuntu-only, so there is nothing to run: take `restreamd.exe` (a prebuilt one, or `GOOS=windows GOARCH=amd64 ./build.sh` — see [Build from sources](../Build/Build.md)), put it in a folder of its own, drop `mediamtx.exe` into `bin\` beside it and have `ffmpeg.exe` on `PATH`. From there `restreamd.exe --config` does exactly the same setup as on Linux and prints the same summary with Windows commands in it: **start** is the executable itself, **stop** is Ctrl+C in its window, the log is `logs\controller.log`, and the firewall line is a `netsh advfirewall` rule instead of `ufw`. There's no service — the console window *is* the service, so keep it open (or wrap it in Task Scheduler / NSSM yourself).
+**On Windows it looks different.** `install.sh` is Debian/Ubuntu-only; the Windows archive carries `install.ps1` instead. Unpack `build_<version>_win64.tar.gz` into a folder of its own — `tar` is built into Windows, so `tar -xzf build_0.1.0_win64.tar.gz` works in any console — then run the installer from PowerShell in that folder:
+
+```powershell
+.\install.ps1
+```
+
+It installs `ffmpeg` through winget (skipping that if `ffmpeg` and `ffprobe` are already on `PATH`), downloads `mediamtx.exe` into `bin\`, restricts the files holding secrets with `icacls`, and hands over to `restreamd.exe --config` — the same setup as on Linux, printing the same summary with Windows commands in it: **start** is the executable itself, **stop** is Ctrl+C in its window, the log is `logs\controller.log`, and the firewall line is a `netsh advfirewall` rule instead of `ufw`. Expect a Windows Firewall prompt the first time MediaMTX opens its listening ports.
+
+There is no service — the console window *is* the service, so keep it open (or wrap it in Task Scheduler yourself; `sc.exe create` will not work, the binary is a plain console program, not a Windows service).
+
+Put the folder on a real local disk. A WSL share (`\\wsl.localhost\...`) cannot run it: MediaMTX watches its config file, and that share does not implement the Windows change-notification call, so it exits immediately with `ReadDirectoryChanges: Incorrect function`.
 
 ## 2. Reach the dashboard and config
 
