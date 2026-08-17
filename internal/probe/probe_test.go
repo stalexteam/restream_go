@@ -54,7 +54,12 @@ func TestBuildTrackCountsArgs(t *testing.T) {
 // TestBuildManifestTransportArgs перевіряє argv.
 func TestBuildManifestTransportArgs(t *testing.T) {
 	got := BuildManifestTransportArgs("srt://127.0.0.1:8890?streamid=read:live/foo:u:p")
-	want := []string{"srt-live-transmit", "-ll", "error", "srt://127.0.0.1:8890?streamid=read:live/foo:u:p", "file://con"}
+	want := []string{
+		"ffmpeg", "-hide_banner", "-loglevel", "error",
+		"-f", "data", "-i", "srt://127.0.0.1:8890?streamid=read:live/foo:u:p",
+		"-map", "0", "-c", "copy",
+		"-f", "data", "pipe:1",
+	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("BuildManifestTransportArgs = %#v, want %#v", got, want)
 	}

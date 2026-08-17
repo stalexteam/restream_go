@@ -13,8 +13,13 @@ func BuildRTMPReadbackArgs(readbackURL string, audioIdx int) []string {
 	}
 }
 
-// BuildSRTReadbackArgs — порт Platform._build_srt_transport_args: сирі
-// TS-байти в stdout, парсинг контейнера — окремо (wire/ts).
+// BuildSRTReadbackArgs — сирі TS-байти в stdout, парсинг контейнера окремо
+// (wire/ts). -f data + -map 0: без ремуксу і без автовибору потоків.
 func BuildSRTReadbackArgs(readbackURL string) []string {
-	return []string{"srt-live-transmit", "-ll", "warn", readbackURL, "file://con"}
+	return []string{
+		"ffmpeg", "-hide_banner", "-loglevel", "warning",
+		"-f", "data", "-i", readbackURL,
+		"-map", "0", "-c", "copy",
+		"-f", "data", "pipe:1",
+	}
 }

@@ -46,6 +46,7 @@ func Main() {
 		fmt.Fprintf(os.Stderr, "could not create the working directories in %s: %v\n", baseDir, err)
 		os.Exit(1)
 	}
+	prependBinToPath(baseDir)
 	config, err := validateStartup(baseDir, configPath)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -145,6 +146,17 @@ func printUsage(w io.Writer) {
 type filesMessage struct {
 	Type string `json:"type"`
 	Data any    `json:"data"`
+}
+
+// prependBinToPath робить <base>/bin складом залежностей конвеєра.
+func prependBinToPath(baseDir string) {
+	binDir := filepath.Join(baseDir, "bin")
+	if current := os.Getenv("PATH"); current != "" {
+		binDir += string(os.PathListSeparator) + current
+	}
+	if err := os.Setenv("PATH", binDir); err != nil {
+		log.Printf("could not extend PATH with %s: %v", filepath.Join(baseDir, "bin"), err)
+	}
 }
 
 // baseDirFromExecutable — аналог Path(__file__).parent.parent: каталог бінаря,

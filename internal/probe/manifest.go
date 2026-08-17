@@ -19,10 +19,14 @@ const (
 	DefaultManifestMinWindowSec = 1.0
 )
 
-// BuildManifestTransportArgs — argv srt-live-transmit для ProbeTSManifest
-// (probe_ts_manifest).
+// BuildManifestTransportArgs — argv транспорту для ProbeTSManifest.
 func BuildManifestTransportArgs(url string) []string {
-	return []string{"srt-live-transmit", "-ll", "error", url, "file://con"}
+	return []string{
+		"ffmpeg", "-hide_banner", "-loglevel", "error",
+		"-f", "data", "-i", url,
+		"-map", "0", "-c", "copy",
+		"-f", "data", "pipe:1",
+	}
 }
 
 type deadlineReader interface{ SetReadDeadline(time.Time) error }
@@ -36,13 +40,14 @@ func ProbeTSManifest(url string, timeoutSec, minWindowSec float64) (ts.Manifest,
 	if !strings.HasPrefix(url, "srt://") {
 		return ts.Manifest{}, false
 	}
-	cmd := exec.Command("srt-live-transmit", "-ll", "error", url, "file://con")
+	args := BuildManifestTransportArgs(url)
+	cmd := exec.Command(args[0], args[1:]...)
 	stdout, err := cmd.StdoutPipe()
 	if err == nil {
 		err = proc.StartCmd(cmd)
 	}
 	if err != nil {
-		log.Printf("probe: could not start srt-live-transmit for the source manifest: %v", err)
+		log.Printf("probe: could not start the transport for the source manifest: %v", err)
 		return ts.Manifest{}, false
 	}
 

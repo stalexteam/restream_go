@@ -1,0 +1,102 @@
+# Windows counterpart of install.sh: ffmpeg via winget, MediaMTX, first-time setup.
+#
+# Comments and output are English on purpose -- Windows PowerShell 5.1 reads a
+# BOM-less file as ANSI and would mangle Cyrillic.
+# config.json, the OBS files and tmp/mediamtx.yml are produced by restreamd itself.
+
+$ErrorActionPreference = 'Stop'
+
+$MediaMTXVersion = 'v1.19.3'
+$BaseDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RestreamdBin = Join-Path $BaseDir 'restreamd.exe'
+
+Write-Host "==> Project directory: $BaseDir"
+
+if (-not (Test-Path $RestreamdBin)) {
+    Write-Host "==> ERROR: $RestreamdBin not found"
+    Write-Host "    Build it first with GOOS=windows ./build.sh in the source tree, then copy build/ here."
+    exit 1
+}
+
+# MediaMTX watches its config file; a WSL share has no ReadDirectoryChangesW.
+if ($BaseDir -like '\\wsl.localhost\*' -or $BaseDir -like '\\wsl$\*') {
+    Write-Host "==> WARNING: MediaMTX cannot run from a WSL share ($BaseDir)"
+    Write-Host "    Copy this directory to a local disk and run install.ps1 there."
+}
+
+foreach ($dir in 'bin', 'media', 'logs', 'tmp') {
+    New-Item -ItemType Directory -Force (Join-Path $BaseDir $dir) | Out-Null
+}
+
+# ---- ffmpeg / ffprobe -------------------------------------------------------
+
+function Test-Tool($name) { return [bool](Get-Command $name -ErrorAction SilentlyContinue) }
+
+# winget writes PATH to the registry, not to the running shell.
+function Update-PathFromRegistry {
+    $machine = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+    $user = [Environment]::GetEnvironmentVariable('Path', 'User')
+    $env:Path = ($machine, $user | Where-Object { $_ }) -join ';'
+}
+
+if ((Test-Tool 'ffmpeg') -and (Test-Tool 'ffprobe')) {
+    Write-Host "==> ffmpeg and ffprobe already on PATH, skipping"
+} elseif (Test-Tool 'winget') {
+    Write-Host "==> Installing ffmpeg (Gyan.FFmpeg) via winget"
+    winget install --id Gyan.FFmpeg --exact --source winget `
+        --accept-package-agreements --accept-source-agreements
+    Update-PathFromRegistry
+    if (-not ((Test-Tool 'ffmpeg') -and (Test-Tool 'ffprobe'))) {
+        Write-Host "==> WARNING: ffmpeg is installed but not visible in this shell yet"
+        Write-Host "    Open a new terminal before starting the controller."
+    }
+} else {
+    Write-Host "==> WARNING: winget not available and ffmpeg is missing"
+    Write-Host "    Install ffmpeg yourself and make sure ffmpeg.exe and ffprobe.exe are on PATH."
+}
+
+# ---- MediaMTX ---------------------------------------------------------------
+
+$mtxBin = Join-Path $BaseDir 'bin\mediamtx.exe'
+if (Test-Path $mtxBin) {
+    Write-Host "==> MediaMTX already installed, skipping download"
+} else {
+    Write-Host "==> Downloading MediaMTX $MediaMTXVersion"
+    $url = "https://github.com/bluenviron/mediamtx/releases/download/$MediaMTXVersion/" +
+           "mediamtx_${MediaMTXVersion}_windows_amd64.zip"
+    $zip = Join-Path $env:TEMP "mediamtx_$MediaMTXVersion.zip"
+    $unpack = Join-Path $env:TEMP "mediamtx_$MediaMTXVersion"
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
+        if (Test-Path $unpack) { Remove-Item $unpack -Recurse -Force }
+        Expand-Archive -Path $zip -DestinationPath $unpack -Force
+        Copy-Item (Join-Path $unpack 'mediamtx.exe') $mtxBin -Force
+    } finally {
+        Remove-Item $zip, $unpack -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+# ---- configuration ----------------------------------------------------------
+
+Write-Host "==> Configuration"
+& $RestreamdBin --config
+
+# config.json and the OBS files carry passwords and the token; tmp/ and logs/
+# carry ffmpeg command lines with them.
+$me = "$env:USERDOMAIN\$env:USERNAME"
+foreach ($name in 'config.json', 'obs-dock.html', 'obs-source.html') {
+    $path = Join-Path $BaseDir $name
+    if (Test-Path $path) {
+        icacls $path /inheritance:r /grant:r "${me}:(F)" | Out-Null
+    }
+}
+foreach ($name in 'tmp', 'logs') {
+    $path = Join-Path $BaseDir $name
+    if (Test-Path $path) {
+        icacls $path /inheritance:r /grant:r "${me}:(OI)(CI)(F)" | Out-Null
+    }
+}
+
+Write-Host ""
+Write-Host "==> Done. Start the controller with:"
+Write-Host "    $RestreamdBin"

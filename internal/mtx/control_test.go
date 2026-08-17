@@ -149,3 +149,27 @@ func containsAll(s string, subs ...string) bool {
 	}
 	return true
 }
+
+// TestConfigPathLeavesWSLShare — на 9P-шарі конфіг мусить піти в %TEMP%.
+func TestConfigPathLeavesWSLShare(t *testing.T) {
+	local := ConfigPath("/opt/restreamd")
+	if want := filepath.Join("/opt/restreamd", "tmp", "mediamtx.yml"); local != want {
+		t.Errorf("local base: %q, want %q", local, want)
+	}
+	for _, base := range []string{
+		`\\wsl.localhost\twich\home\twich\restream_go\build`,
+		`\\WSL$\Ubuntu\srv\restreamd`,
+	} {
+		got := ConfigPath(base)
+		if strings.HasPrefix(got, `\\`) {
+			t.Errorf("ConfigPath(%q) = %q, want it off the share", base, got)
+		}
+		if !strings.HasSuffix(got, "mediamtx.yml") {
+			t.Errorf("ConfigPath(%q) = %q, want it to end with mediamtx.yml", base, got)
+		}
+	}
+	// Різні бази не діляться одним файлом.
+	if ConfigPath(`\\wsl.localhost\a\x`) == ConfigPath(`\\wsl.localhost\b\y`) {
+		t.Error("different bases collide on one config path")
+	}
+}

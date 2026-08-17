@@ -1,5 +1,5 @@
-// Package ingest будує readback-URL і argv рідерів (ffmpeg RTMP /
-// srt-live-transmit) для Manager.readback_url і Platform-рідерів у
+// Package ingest будує readback-URL і argv рідерів для Manager.readback_url
+// і Platform-рідерів.
 package ingest
 
 import "fmt"

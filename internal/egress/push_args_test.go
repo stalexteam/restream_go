@@ -21,15 +21,26 @@ func TestBuildFLVPushArgs(t *testing.T) {
 	}
 }
 
-// TestBuildSRTPushArgs — argv srt-транспорту
-// Platform._build_srt_push_transport_args.
+// TestBuildSRTPushArgs — argv srt-транспорту.
 func TestBuildSRTPushArgs(t *testing.T) {
 	got := BuildSRTPushArgs("srt://x.example.com:9999?streamid=publish:foo")
 	want := []string{
-		"srt-live-transmit", "-ll", "warn", "-chunk", "1316", "-a", "no",
-		"file://con", "srt://x.example.com:9999?streamid=publish:foo",
+		"ffmpeg", "-hide_banner", "-loglevel", "warning",
+		"-f", "data", "-i", "pipe:0",
+		"-map", "0", "-c", "copy",
+		"-f", "data", "srt://x.example.com:9999?streamid=publish:foo&pkt_size=1316&linger=2",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("BuildSRTPushArgs = %#v, want %#v", got, want)
+	}
+}
+
+// TestWithSRTOptions — роздільник залежить від наявного query.
+func TestWithSRTOptions(t *testing.T) {
+	if got := WithSRTOptions("srt://h:1/"); got != "srt://h:1/?pkt_size=1316&linger=2" {
+		t.Errorf("no query: %q", got)
+	}
+	if got := WithSRTOptions("srt://h:1/?a=b"); got != "srt://h:1/?a=b&pkt_size=1316&linger=2" {
+		t.Errorf("with query: %q", got)
 	}
 }

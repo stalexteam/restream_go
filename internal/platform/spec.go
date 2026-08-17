@@ -16,10 +16,10 @@ const (
 	BackupTimelineMultitrack = "multitrack"
 
 	OutputRTMPPush = "rtmppush" // власний RTMP-клієнт (EB-драбина / хімера)
-	OutputSRTPush  = "srtpush"  // ts_mux у stdin srt-live-transmit
+	OutputSRTPush  = "srtpush"  // ts_mux у stdin srt-транспорту
 	OutputFLVPush  = "flvpush"  // FLV у stdin push-ffmpeg
 
-	RelaySRT  = "srt"  // srt-live-transmit + TS-демукс
+	RelaySRT  = "srt"  // srt-транспорт + TS-демукс
 	RelayRTMP = "rtmp" // ffmpeg-readback + FLV-рідер
 )
 

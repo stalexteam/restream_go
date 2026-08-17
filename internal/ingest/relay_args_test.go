@@ -23,7 +23,12 @@ func TestBuildRTMPReadbackArgs(t *testing.T) {
 // TestBuildSRTReadbackArgs перевіряє argv.
 func TestBuildSRTReadbackArgs(t *testing.T) {
 	got := BuildSRTReadbackArgs("srt://127.0.0.1:8890?streamid=read:live/bar:u:p")
-	want := []string{"srt-live-transmit", "-ll", "warn", "srt://127.0.0.1:8890?streamid=read:live/bar:u:p", "file://con"}
+	want := []string{
+		"ffmpeg", "-hide_banner", "-loglevel", "warning",
+		"-f", "data", "-i", "srt://127.0.0.1:8890?streamid=read:live/bar:u:p",
+		"-map", "0", "-c", "copy",
+		"-f", "data", "pipe:1",
+	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("BuildSRTReadbackArgs = %#v, want %#v", got, want)
 	}

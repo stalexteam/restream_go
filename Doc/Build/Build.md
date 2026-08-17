@@ -15,6 +15,14 @@ cd restream_go
 ./build.sh
 ```
 
+The Windows executable carries an application icon. `build.sh` generates it on Windows targets — the icon lives in `internal/assets/restreamd.ico`, and the linker reads it through `resource_windows_amd64.syso`, which is a build artifact, not a checked-in file. Building without `build.sh` still works; the executable just has no icon unless you run the generator first:
+
+```bash
+go run internal/assets/mkicon.go
+```
+
+That generator is plain Go with no external toolchain: `cvtres` output is unusable here because it emits absolute symbols (`@comp.id`, `@feat.00`) that make the Go linker fail with `sectnum < 0!`.
+
 `build.sh` compiles the module root and lays out the distribution in `build/`:
 
 ```

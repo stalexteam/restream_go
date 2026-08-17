@@ -401,7 +401,7 @@ func (p *Pipeline) newOutput(tag string) OutputProc {
 		})
 	case OutputSRTPush:
 		// ffmpeg не демуксує наш N-трековий 0x95-мультитрек назад у TS —
-		// муксуємо самі, srt-live-transmit лише транспортує байти.
+		// муксуємо самі, транспорт лише возить байти.
 		p.outputArgs = func() []string { return egress.BuildSRTPushArgs(p.URL()) }
 	default:
 		p.outputArgs = func() []string { return egress.BuildFLVPushArgs(p.URL()) }

@@ -21,9 +21,9 @@ if [ ! -x "${RESTREAMD_BIN}" ]; then
   exit 1
 fi
 
-echo "==> Installing system packages (ffmpeg, srt-tools, curl)"
+echo "==> Installing system packages (ffmpeg, curl)"
 sudo apt-get update -qq
-sudo apt-get install -y -qq ffmpeg srt-tools curl ca-certificates
+sudo apt-get install -y -qq ffmpeg curl ca-certificates
 
 mkdir -p "${BASE_DIR}/bin" "${BASE_DIR}/media" "${BASE_DIR}/logs" "${BASE_DIR}/tmp"
 

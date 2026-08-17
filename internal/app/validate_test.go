@@ -2,6 +2,7 @@ package app
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -9,9 +10,24 @@ import (
 	"restream_go/internal/control"
 )
 
+// stubTools підміняє пошук зовнішніх бінарів: набір тесту не залежить від
+// того, що стоїть у системі.
+func stubTools(t *testing.T, found bool) {
+	t.Helper()
+	saved := lookPath
+	lookPath = func(name string) (string, error) {
+		if found {
+			return "/stub/" + name, nil
+		}
+		return "", exec.ErrNotFound
+	}
+	t.Cleanup(func() { lookPath = saved })
+}
+
 // validBase — макет інсталяції, який має проходити строгу валідацію.
 func validBase(t *testing.T) (string, string) {
 	t.Helper()
+	stubTools(t, true)
 	base := t.TempDir()
 	if err := ensureDirs(base); err != nil {
 		t.Fatal(err)
@@ -113,6 +129,14 @@ func TestValidateStartupToleratesEmptyMedia(t *testing.T) {
 	if _, err := validateStartup(base, configPath); err != nil {
 		t.Fatalf("empty media/ must not block the start: %v", err)
 	}
+}
+
+// TestValidateStartupRejectsMissingTools — без ffmpeg старту немає.
+func TestValidateStartupRejectsMissingTools(t *testing.T) {
+	base, configPath := validBase(t)
+	stubTools(t, false)
+	assertStartupError(t, base, configPath,
+		"required program not found: ffmpeg", filepath.Join(base, "bin"))
 }
 
 func assertStartupError(t *testing.T, base, configPath, wantProblem, wantHint string) {

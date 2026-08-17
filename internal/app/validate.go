@@ -3,15 +3,24 @@ package app
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
 	"restream_go/internal/control"
+	"restream_go/internal/mtx"
 )
 
 // requiredKeys — поля, без яких штатний старт не має сенсу.
 var requiredKeys = []string{"listen_host", "listen_port", "obs_pass", "internal_pass", "dashboard_token"}
+
+// requiredTools — зовнішні бінарі конвеєра; шукаються в PATH, куди Main уже
+// додав <base>/bin.
+var requiredTools = []string{"ffmpeg", "ffprobe"}
+
+// lookPath — шов для тестів.
+var lookPath = exec.LookPath
 
 // startupError несе і причину відмови, і підказку, як її полагодити.
 type startupError struct{ problem, hint string }
@@ -33,7 +42,20 @@ func validateStartup(baseDir, configPath string) (*control.Dict, error) {
 	if err := checkMediaMTXBinary(baseDir); err != nil {
 		return nil, err
 	}
+	if err := checkRequiredTools(baseDir); err != nil {
+		return nil, err
+	}
 	return config, nil
+}
+
+func checkRequiredTools(baseDir string) error {
+	for _, name := range requiredTools {
+		if _, err := lookPath(name); err != nil {
+			return &startupError{"required program not found: " + name,
+				"install ffmpeg, or put " + name + " in " + filepath.Join(baseDir, "bin")}
+		}
+	}
+	return nil
 }
 
 func loadStartupConfig(configPath string) (*control.Dict, error) {
@@ -68,7 +90,7 @@ func checkRequiredKeys(configPath string, config *control.Dict) error {
 }
 
 func checkMediaMTXBinary(baseDir string) error {
-	path := filepath.Join(baseDir, "bin", "mediamtx")
+	path := mtx.BinaryPath(baseDir)
 	info, err := os.Stat(path)
 	if err != nil || !info.Mode().IsRegular() {
 		return &startupError{"the MediaMTX binary is missing: " + path,

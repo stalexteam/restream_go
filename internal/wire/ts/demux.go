@@ -296,7 +296,7 @@ func (d *Demuxer) Flush() {
 
 func (d *Demuxer) feedPacket(pkt []byte) {
 	if pkt[0] != syncByte {
-		return // ресинк не реалізовано -- srt-live-transmit байти не губить/не зсуває
+		return // ресинк не реалізовано -- транспорт байти не губить/не зсуває
 	}
 	pid := int(pkt[1]&0x1F)<<8 | int(pkt[2])
 	if pid == nullPID {

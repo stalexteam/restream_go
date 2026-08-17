@@ -1,11 +1,15 @@
 package mtx
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -43,12 +47,37 @@ type runningProc struct {
 	exited  chan struct{}
 }
 
+// ConfigPath — mediamtx.yml у tmp/ інсталяції; на WSL-шарі MediaMTX гине на
+// стеженні за конфігом, тому звідти конфіг їде в %TEMP%.
+func ConfigPath(baseDir string) string {
+	if !onWSLShare(baseDir) {
+		return filepath.Join(baseDir, "tmp", "mediamtx.yml")
+	}
+	sum := sha256.Sum256([]byte(strings.ToLower(baseDir)))
+	return filepath.Join(os.TempDir(), "restreamd-"+hex.EncodeToString(sum[:4]), "mediamtx.yml")
+}
+
+// onWSLShare — 9P-шара WSL, де немає ReadDirectoryChangesW.
+func onWSLShare(path string) bool {
+	lower := strings.ToLower(path)
+	return strings.HasPrefix(lower, `\\wsl.localhost\`) || strings.HasPrefix(lower, `\\wsl$\`)
+}
+
+// BinaryPath — бінар MediaMTX у штатному макеті.
+func BinaryPath(baseDir string) string {
+	name := "mediamtx"
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	return filepath.Join(baseDir, "bin", name)
+}
+
 // NewController — штатний макет каталогів (bin/mediamtx, tmp/mediamtx.yml,
 // logs/mediamtx.log).
 func NewController(baseDir string) *Controller {
 	return &Controller{
-		binPath:           filepath.Join(baseDir, "bin", "mediamtx"),
-		yamlPath:          filepath.Join(baseDir, "tmp", "mediamtx.yml"),
+		binPath:           BinaryPath(baseDir),
+		yamlPath:          ConfigPath(baseDir),
 		logPath:           filepath.Join(baseDir, "logs", "mediamtx.log"),
 		dataDir:           filepath.Join(baseDir, "tmp"),
 		pidPath:           filepath.Join(baseDir, "tmp", ".mediamtx.pid"),
