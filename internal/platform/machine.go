@@ -619,6 +619,7 @@ func (m *Machine) teardownClean() {
 	m.nodes.StopRelay()
 	m.nodes.BackupStop()
 	m.nodes.StopOutput()
+	m.nodes.ResetTimeline()
 	m.cancelOracle()
 	m.setState(StateOffline)
 }
@@ -629,6 +630,7 @@ func (m *Machine) giveUpOnUnreachable() {
 	m.nodes.StopRelay()
 	m.nodes.BackupStop()
 	m.nodes.StopOutput()
+	m.nodes.ResetTimeline()
 	m.cancelOracle()
 	m.halted = true
 	m.setState(StateOffline)

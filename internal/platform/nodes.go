@@ -20,6 +20,7 @@ type nodes interface {
 	SetFailed(v bool)
 
 	SetActive(source string)
+	ResetTimeline()
 	RequestSwitch()
 	PendingSource() string
 	SecondsSinceRelayData() float64
@@ -88,6 +89,7 @@ func (n pipelineNodes) Failed() bool      { return n.p.Failed() }
 func (n pipelineNodes) SetFailed(v bool)  { n.p.SetFailed(v) }
 
 func (n pipelineNodes) SetActive(source string) { n.p.Switcher.SetActive(source) }
+func (n pipelineNodes) ResetTimeline()          { n.p.Switcher.Reset() }
 func (n pipelineNodes) RequestSwitch()          { n.p.requestSwitchToRelay(nil) }
 func (n pipelineNodes) PendingSource() string   { return n.p.Switcher.PendingSource() }
 func (n pipelineNodes) SecondsSinceRelayData() float64 {

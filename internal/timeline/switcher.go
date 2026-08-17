@@ -152,6 +152,43 @@ func (s *Switcher) SetActive(source string) {
 	s.pendingPriorHeaders = nil
 }
 
+// Reset — кінець трансляції: наступна починає медіа-час з нуля, тож guard-и
+// монотонності минулої глушили б увесь її потік.
+func (s *Switcher) Reset() {
+	s.activeMu.Lock()
+	s.activeSource = noneSourceKey
+	s.pendingSource = noneSourceKey
+	s.pendingCallback = nil
+	s.pendingNotBefore = nil
+	s.pendingPriorHeaders = nil
+	s.activeMu.Unlock()
+
+	s.timelineMu.Lock()
+	s.outputSource = noneSourceKey
+	s.lastOutTS = 0
+	s.offset = 0
+	s.switchOutTS = 0
+	s.waitKeyframe = false
+	s.startedTracks = map[byte]bool{}
+	s.trackOutTS = map[string]int64{}
+	s.headersMu.Lock()
+	s.seqHeaders = map[string]map[string][]byte{}
+	s.headersMu.Unlock()
+	s.timelineMu.Unlock()
+
+	s.gopMu.Lock()
+	s.gopSamples = nil
+	s.relayKeyframeAt.Store(0)
+	s.relayGOPSec.Store(0)
+	s.gopMu.Unlock()
+
+	s.statsMu.Lock()
+	s.byteSamples = nil
+	s.statsMu.Unlock()
+	s.hasRelayData.Store(false)
+	s.lastRelayDataAt.Store(0)
+}
+
 // RequestSwitch — відкладене перемикання: source стає активним лише на його
 // першому ready-keyframe. notBefore (nil = немає) — keyframe-и РАНІШЕ цієї
 // миті ігноруються, озброєння лишається чинним.

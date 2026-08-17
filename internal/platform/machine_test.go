@@ -43,6 +43,7 @@ func (s *stubNodes) Failed() bool      { return s.failed }
 func (s *stubNodes) SetFailed(v bool)  { s.failed = v }
 
 func (s *stubNodes) SetActive(source string)        { s.call("set_active " + source) }
+func (s *stubNodes) ResetTimeline()                 { s.call("reset_timeline") }
 func (s *stubNodes) RequestSwitch()                 { s.call("request_switch") }
 func (s *stubNodes) PendingSource() string          { return "" }
 func (s *stubNodes) SecondsSinceRelayData() float64 { return 0 }
